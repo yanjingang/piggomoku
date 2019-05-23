@@ -23,7 +23,7 @@ BASE_PATH = os.path.realpath(CUR_PATH + '/../../../')
 sys.path.append(BASE_PATH)
 # print(CUR_PATH, BASE_PATH)
 
-from machinelearning.lib import logger
+from dps import utils
 from game import Board
 #from mcts_pure import MCTSPlayer as MCTSPurePlayer
 #from mcts_pure import MCTS
@@ -457,7 +457,7 @@ class MctsTest():
         explained_var_new = (1 -
                              np.var(np.array(winner_batch) - new_v.flatten()) /
                              np.var(np.array(winner_batch)))
-        logger.info(("TEST kl:{:.5f},"
+        logging.info(("TEST kl:{:.5f},"
                      "lr_multiplier:{:.3f},"
                      "loss:{},"
                      "entropy:{},"
@@ -468,7 +468,7 @@ class MctsTest():
                               loss,
                               entropy,
                               explained_var_old,
-                              explained_var_new), MctsTest)
+                              explained_var_new))
         return loss, entropy
 
     def policy_evaluate(self, n_games=10):
@@ -491,8 +491,8 @@ class MctsTest():
             win_cnt[winner] += 1
         # 胜率
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
-        logger.info("TEST Num_playouts:{}, win: {}, lose: {}, tie:{}".format(self.pure_mcts_playout_num,
-                                                                        win_cnt[1], win_cnt[2], win_cnt[-1]), MctsTest)
+        logging.info("TEST Num_playouts:{}, win: {}, lose: {}, tie:{}".format(self.pure_mcts_playout_num,
+                                                                        win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
 
 
@@ -556,20 +556,19 @@ class MctsTest():
             play_data = self.get_equi_data(play_data)
             # 保存对抗数据到data_buffer
             self.data_buffer.extend(play_data)
-            logger.info("TEST Batch i:{}, episode_len:{}".format(i + 1, self.episode_len), MctsTest)
+            logging.info("TEST Batch i:{}, episode_len:{}".format(i + 1, self.episode_len))
 
             # 2.使用对抗数据重新训练策略价值网络模型
             if len(self.data_buffer) >= self.batch_size:
                 loss, entropy = self.policy_update()
 
             # 3.检查一下当前模型胜率
-            logger.info("TEST Current self-play batch: {}".format(i + 1), MctsTest)
+            logging.info("TEST Current self-play batch: {}".format(i + 1))
             # 策略胜率评估：模型与纯MCTS玩家对战n局看胜率
             win_ratio = self.policy_evaluate(self.policy_evaluate_size)
             self.policy_value_net.save_model(CUR_PATH + '/model/current_test_{}_{}.model'.format(self.board_width, self.board_height))
             if win_ratio > self.best_win_ratio:  # 胜率超过历史最优模型
-                logger.info("TEST New best policy!!!!!!!!batch:{} win_ratio:{}->{} pure_mcts_playout_num:{}".format(i + 1, self.best_win_ratio, win_ratio, self.pure_mcts_playout_num),
-                            MctsTest)
+                logging.info("TEST New best policy!!!!!!!!batch:{} win_ratio:{}->{} pure_mcts_playout_num:{}".format(i + 1, self.best_win_ratio, win_ratio, self.pure_mcts_playout_num))
                 self.best_win_ratio = win_ratio
                 # 保存当前模型为最优模型best_policy
                 self.policy_value_net.save_model(CUR_PATH + '/model/best_test_{}_{}.model'.format(self.board_width, self.board_height))
@@ -579,14 +578,18 @@ class MctsTest():
                     self.best_win_ratio = 0.0
             """
         except KeyboardInterrupt:
-            logger.info('\n\rquit', MctsTest)
+            logging.info('\n\rquit')
 
 
 if __name__ == '__main__':
     #model_file = CUR_PATH + '/model/best_policy_8_8_keras.model'
-    #logger.debug("init") 
+    #logging.debug("init") 
     #policy_value_net = PolicyValueNet(8, 8, model_file=model_file)
-    #logger.debug("done") 
+    #logging.debug("done") 
+
+    # log init
+    utils.init_logging(log_file='test', log_path=CUR_PATH)
+    print("log_file: {}".format(log_file))
 
     ut = MctsTest()
     ut.run()

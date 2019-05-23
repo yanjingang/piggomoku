@@ -28,7 +28,7 @@ CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 BASE_PATH = os.path.realpath(CUR_PATH + '/../../')
 sys.path.append(BASE_PATH)
 # print(CUR_PATH, BASE_PATH)
-from machinelearning.lib import utils
+from dps import utils
 from game import Board, Game
 from mcts import MCTSPlayer
 from net.policy_value_net_keras import PolicyValueNet
