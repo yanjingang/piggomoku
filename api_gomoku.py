@@ -4,7 +4,7 @@
 File: api_gomoku.py
 Desc: 五子棋 强化学习模型 API 封装
 Demo: 
-    cd /home/work/piglab/webservice/service/ && nohup python api_gomoku.py > log/api_gomoku.log &
+    nohup python api_gomoku.py > log/api_gomoku.log &
     
     http://www.yanjingang.com:8023/piglab/game/gomoku?session_id=1548849426270&location=3,4
 
