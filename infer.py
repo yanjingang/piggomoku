@@ -13,10 +13,7 @@ from __future__ import print_function
 import os
 import sys
 
-# PATH
 CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-BASE_PATH = os.path.realpath(CUR_PATH + '/../../../')
-sys.path.append(BASE_PATH)
 
 from machinelearning.lib import logger
 from game import Board, Game
