@@ -18,7 +18,7 @@ from collections import defaultdict, deque
 
 CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 
-from machinelearning.lib import logger
+from dp import utils
 from game import Board, Game
 from mcts import MCTSPurePlayer, MCTSPlayer
 from net.policy_value_net_keras import PolicyValueNet  # Keras
@@ -115,8 +115,8 @@ class GomokuTrainPipeline():
 
         explained_var_old = (1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch)))
         explained_var_new = (1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch)))
-        logger.info(("TRAIN kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f}"
-                     ).format(kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new), GomokuTrainPipeline)
+        logging.info(("TRAIN kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f}"
+                     ).format(kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new))
         return loss, entropy
 
     def policy_evaluate(self, n_games=10):
@@ -133,8 +133,8 @@ class GomokuTrainPipeline():
             win_cnt[winner] += 1
         # 胜率
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
-        logger.info("TRAIN Num_playouts:{}, win: {}, lose: {}, tie:{}".format(self.pure_mcts_playout_num,
-                                                                              win_cnt[1], win_cnt[2], win_cnt[-1]), GomokuTrainPipeline)
+        logging.info("TRAIN Num_playouts:{}, win: {}, lose: {}, tie:{}".format(self.pure_mcts_playout_num,
+                                                                              win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
 
     def run(self):
@@ -143,19 +143,18 @@ class GomokuTrainPipeline():
             for i in range(self.game_batch_num):  # 计划训练批次
                 # 收集自我对抗数据
                 self.collect_selfplay_data(self.play_batch_size)
-                logger.info("TRAIN Batch i:{}, episode_len:{}".format(i + 1, self.episode_len), GomokuTrainPipeline)
+                logging.info("TRAIN Batch i:{}, episode_len:{}".format(i + 1, self.episode_len))
                 # 使用对抗数据重新训练策略价值网络模型
                 if len(self.data_buffer) > self.batch_size:
                     loss, entropy = self.policy_update()
                 # 每n个batch检查一下当前模型胜率
                 if (i + 1) % self.check_freq == 0:
-                    logger.info("TRAIN Current self-play batch: {}".format(i + 1), GomokuTrainPipeline)
+                    logging.info("TRAIN Current self-play batch: {}".format(i + 1))
                     # 策略胜率评估：模型与纯MCTS玩家对战n局看胜率
                     win_ratio = self.policy_evaluate(self.policy_evaluate_size)
                     self.policy_value_net.save_model(CUR_PATH + '/model/current_policy_{}x{}.model'.format(self.board_width, self.board_height))
                     if win_ratio > self.best_win_ratio:  # 胜率超过历史最优模型
-                        logger.info("TRAIN New best policy!!!!!!!!batch:{} win_ratio:{}->{} pure_mcts_playout_num:{}".format(i + 1, self.best_win_ratio, win_ratio, self.pure_mcts_playout_num),
-                                    GomokuTrainPipeline)
+                        logging.info("TRAIN New best policy!!!!!!!!batch:{} win_ratio:{}->{} pure_mcts_playout_num:{}".format(i + 1, self.best_win_ratio, win_ratio, self.pure_mcts_playout_num))
                         self.best_win_ratio = win_ratio
                         # 保存当前模型为最优模型best_policy
                         self.policy_value_net.save_model(CUR_PATH + '/model/best_policy_{}x{}.model'.format(self.board_width, self.board_height))
@@ -164,10 +163,16 @@ class GomokuTrainPipeline():
                             self.pure_mcts_playout_num += 1000
                             self.best_win_ratio = 0.0
         except KeyboardInterrupt:
-            logger.info('\n\rquit', GomokuTrainPipeline)
+            logging.info('\n\rquit')
 
 
 if __name__ == '__main__':
+    # log init
+    log_file = GomokuTrainPipeline.__name__.lower() # + '-' + str(os.getpid())
+    utils.init_logging(log_file=log_file, log_path=CUR_PATH)
+    print("log_file: {}".format(log_file))
+
+
     #training_pipeline = GomokuTrainPipeline()
     model_file = CUR_PATH + '/model/current_policy_8x8.model'
     training_pipeline = GomokuTrainPipeline(init_model=model_file)

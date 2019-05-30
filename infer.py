@@ -15,7 +15,7 @@ import sys
 
 CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 
-from machinelearning.lib import logger
+from dp import utils
 from game import Board, Game
 from mcts import MCTSPlayer
 from net.policy_value_net_keras import PolicyValueNet  # Keras
@@ -67,7 +67,6 @@ def run():
         best_policy = PolicyValueNetNumpy(width, height, policy_param)
         """
         mcts_player = MCTSPlayer(best_policy.policy_value_fn, c_puct=5, n_playout=900)
-        logger.info("MCTSPlayer: n_playout={}".format(900), MCTSPlayer)
 
         # 纯MCTS棋手
         # mcts_player = MCTSPurePlayer(c_puct=5, n_playout=4000)

@@ -4,7 +4,7 @@
 File: api_gomoku.py
 Desc: 五子棋 强化学习模型 API 封装
 Demo: 
-    cd /home/work/piglab/webservice/service/ && nohup python api_gomoku.py > log/api_gomoku.log &
+    nohup python api_gomoku.py > log/api_gomoku.log &
     
     http://www.yanjingang.com:8023/piglab/game/gomoku?session_id=1548849426270&location=3,4
 
@@ -24,7 +24,7 @@ import tornado.web
 import tornado.httpserver
 
 CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-from machinelearning.lib import utils
+from dp import utils
 from game import Board, Game
 from mcts import MCTSPlayer
 from net.policy_value_net_keras import PolicyValueNet
