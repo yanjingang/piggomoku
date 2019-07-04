@@ -10,28 +10,29 @@ Cmd: nohup python train.py >log/train.log &
 """
 
 from __future__ import print_function
+from net.policy_value_net_keras import PolicyValueNet  # Keras
+from mcts import MCTSPurePlayer, MCTSPlayer
+from game import Board, Game
+from dp import utils
 import os
 import sys
 import random
+import logging
 import numpy as np
 from collections import defaultdict, deque
 
 CUR_PATH = os.path.dirname(os.path.abspath(__file__))
 
-from dp import utils
-from game import Board, Game
-from mcts import MCTSPurePlayer, MCTSPlayer
-from net.policy_value_net_keras import PolicyValueNet  # Keras
 # from net.policy_value_net import PolicyValueNet  # Theano and Lasagne
 # from net.policy_value_net_pytorch import PolicyValueNet  # Pytorch
 # from net.policy_value_net_tensorflow import PolicyValueNet # Tensorflow
 
 
 class GomokuTrainPipeline():
-    def __init__(self, init_model=None):
+    def __init__(self, init_model=None, size=8):
         # 棋盘大小 8*8, 5个子连起来
-        self.board_width = 8
-        self.board_height = 8
+        self.board_width = size
+        self.board_height = size
         self.n_in_row = 5  # n子相连
         self.policy_evaluate_size = 10  # 策略评估胜率时的模拟对局次数
         self.game_batch_num = 10000  # selfplay对战次数
@@ -116,7 +117,7 @@ class GomokuTrainPipeline():
         explained_var_old = (1 - np.var(np.array(winner_batch) - old_v.flatten()) / np.var(np.array(winner_batch)))
         explained_var_new = (1 - np.var(np.array(winner_batch) - new_v.flatten()) / np.var(np.array(winner_batch)))
         logging.info(("TRAIN kl:{:.5f},lr_multiplier:{:.3f},loss:{},entropy:{},explained_var_old:{:.3f},explained_var_new:{:.3f}"
-                     ).format(kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new))
+                      ).format(kl, self.lr_multiplier, loss, entropy, explained_var_old, explained_var_new))
         return loss, entropy
 
     def policy_evaluate(self, n_games=10):
@@ -134,7 +135,7 @@ class GomokuTrainPipeline():
         # 胜率
         win_ratio = 1.0 * (win_cnt[1] + 0.5 * win_cnt[-1]) / n_games
         logging.info("TRAIN Num_playouts:{}, win: {}, lose: {}, tie:{}".format(self.pure_mcts_playout_num,
-                                                                              win_cnt[1], win_cnt[2], win_cnt[-1]))
+                                                                               win_cnt[1], win_cnt[2], win_cnt[-1]))
         return win_ratio
 
     def run(self):
@@ -168,12 +169,13 @@ class GomokuTrainPipeline():
 
 if __name__ == '__main__':
     # log init
-    log_file = GomokuTrainPipeline.__name__.lower() # + '-' + str(os.getpid())
-    utils.init_logging(log_file=log_file, log_path=CUR_PATH)
-    print("log_file: {}".format(log_file))
+    utils.init_logging(log_file='train', log_path=CUR_PATH)
 
-
-    #training_pipeline = GomokuTrainPipeline()
-    model_file = CUR_PATH + '/model/current_policy_8x8.model'
-    training_pipeline = GomokuTrainPipeline(init_model=model_file)
+    # train
+    size = 16  # 棋盘大小
+    model_file = '{}/model/current_policy_{}x{}.model'.format(CUR_PATH, size, size)
+    print("model file exists: {}".format(os.path.exists(model_file)))
+    model_file = '' if os.path.exists(model_file) is False else model_file
+    #training_pipeline = GomokuTrainPipeline(size=size)
+    training_pipeline = GomokuTrainPipeline(init_model=model_file, size=size)
     training_pipeline.run()

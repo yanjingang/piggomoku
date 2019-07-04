@@ -10,15 +10,14 @@ Cmd: python infer.p
 """
 
 from __future__ import print_function
+from net.policy_value_net_keras import PolicyValueNet  # Keras
+from mcts import MCTSPlayer
+from game import Board, Game
+from dp import utils
 import os
 import sys
 
 CUR_PATH = os.path.dirname(os.path.abspath(__file__))
-
-from dp import utils
-from game import Board, Game
-from mcts import MCTSPlayer
-from net.policy_value_net_keras import PolicyValueNet  # Keras
 
 
 class HumanPlayer(object):
@@ -47,16 +46,17 @@ class HumanPlayer(object):
         return "HumanPlayer {}".format(self.player)
 
 
-def run():
-    width, height = 8, 8
-    model_file = CUR_PATH+'/model/best_policy_8x8.model'
+if __name__ == '__main__':
+    """infer"""
+    size = 8  # 棋盘大小
+    model_file = '{}/model/best_policy_{}x{}.model'.format(CUR_PATH, size, size)
     try:
         # 初始化棋盘
-        board = Board(width=width, height=height, n_in_row=5)
+        board = Board(width=size, height=size, n_in_row=5)
         game = Game(board)
 
         # 初始化AI棋手
-        best_policy = PolicyValueNet(width, height, model_file=model_file)
+        best_policy = PolicyValueNet(size, size, model_file=model_file)
         """
         # 使用numpy加载训练好的模型(仅限Theano/Lasagne训练出的模型)
         try:
@@ -64,7 +64,7 @@ def run():
         except:
             policy_param = pickle.load(open(model_file, 'rb'),
                                        encoding='bytes')  # To support python3
-        best_policy = PolicyValueNetNumpy(width, height, policy_param)
+        best_policy = PolicyValueNetNumpy(size, size, policy_param)
         """
         mcts_player = MCTSPlayer(best_policy.policy_value_fn, c_puct=5, n_playout=900)
 
@@ -79,7 +79,3 @@ def run():
 
     except KeyboardInterrupt:
         print('\n\rquit')
-
-
-if __name__ == '__main__':
-    run()
