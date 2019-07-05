@@ -48,7 +48,7 @@ class HumanPlayer(object):
 
 if __name__ == '__main__':
     """infer"""
-    size = 8  # 棋盘大小
+    size = 16  # 棋盘大小
     model_file = '{}/model/best_policy_{}x{}.model'.format(CUR_PATH, size, size)
     try:
         # 初始化棋盘

@@ -5,6 +5,7 @@
 
 import numpy as np
 import copy
+import logging
 from operator import itemgetter
 
 
@@ -286,7 +287,14 @@ class MCTSPlayer(object):
             if self._is_selfplay:  # 自我对抗
                 # 添加Dirichlet Noise进行探索（自我训练所需）
                 # dirichlet噪声参数中的0.3：一般按照反比于每一步的可行move数量设置，所以棋盘扩大或改围棋之后这个参数需要减小（此值设置过大容易出现在自我对弈的训练中陷入到两方都只进攻不防守的困境中无法提高）
-                move = np.random.choice(acts, p=0.75 * probs + 0.25 * np.random.dirichlet(0.3 * np.ones(len(probs))))
+                dirichlet = np.random.dirichlet(0.3 * np.ones(len(probs)))
+                logging.info("probs:")
+                logging.info(probs)
+                logging.info("dirichlet:")
+                logging.info(dirichlet)
+                logging.info("p:")
+                logging.info(0.75 * probs + 0.25 * dirichlet)
+                move = np.random.choice(acts, p=0.75 * probs + 0.25 * dirichlet)
                 # 更新根节点并重用搜索树
                 self.mcts.update_with_move(move)
             else:  # 和人类对战
